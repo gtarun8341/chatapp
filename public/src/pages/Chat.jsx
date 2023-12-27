@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +15,9 @@ export default function Chat() {
   const [contacts, setContacts] = useState([]);
   const [currentChat, setCurrentChat] = useState(undefined);
   const [currentUser, setCurrentUser] = useState(undefined);
+  const [groups, setGroups] = useState([]);
+  const [rooms, setRooms] = useState([]);
+
   useEffect(async () => {
     if (!localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)) {
       navigate("/login");
@@ -25,6 +29,7 @@ export default function Chat() {
       );
     }
   }, []);
+
   useEffect(() => {
     if (currentUser) {
       socket.current = io(host);
@@ -35,29 +40,39 @@ export default function Chat() {
   useEffect(async () => {
     if (currentUser) {
       if (currentUser.isAvatarImageSet) {
-        const data = await axios.get(`${allUsersRoute}/${currentUser._id}`);
-        setContacts(data.data);
+        // Fetch users
+        const userData = await axios.get(`${allUsersRoute}/${currentUser._id}`);
+        setContacts(userData.data);
+
+        // Fetch groups
+        const groupData = await axios.get(`${host}/api/groups/user-groups?userId=${currentUser._id}`);
+        setGroups(groupData.data);
+
+        // Fetch rooms
+        const roomData = await axios.get(`${host}/api/rooms`);
+        setRooms(roomData.data);
       } else {
         navigate("/setAvatar");
       }
     }
   }, [currentUser]);
+
   const handleChatChange = (chat) => {
     setCurrentChat(chat);
+    console.log(currentChat);
   };
+
   return (
-    <>
-      <Container>
-        <div className="container">
-          <Contacts contacts={contacts} changeChat={handleChatChange} />
-          {currentChat === undefined ? (
-            <Welcome />
-          ) : (
-            <ChatContainer currentChat={currentChat} socket={socket} />
-          )}
-        </div>
-      </Container>
-    </>
+    <Container>
+      <div className="main-container">
+        <Contacts contacts={contacts} groups={groups} rooms={rooms} changeChat={handleChatChange} />
+        {currentChat === undefined ? (
+          <Welcome />
+        ) : (
+          <ChatContainer currentChat={currentChat} socket={socket} />
+        )}
+      </div>
+    </Container>
   );
 }
 
@@ -69,13 +84,17 @@ const Container = styled.div`
   justify-content: center;
   gap: 1rem;
   align-items: center;
-  background-color: #131324;
-  .container {
+  background-color: #f5f5f5; /* Light gray background */
+  font-family: 'Arial', sans-serif;
+
+  .main-container {
     height: 85vh;
     width: 85vw;
-    background-color: #00000076;
+    background-color: #ffffff; /* White background */
+    border-radius: 10px; /* Rounded corners */
     display: grid;
     grid-template-columns: 25% 75%;
+
     @media screen and (min-width: 720px) and (max-width: 1080px) {
       grid-template-columns: 35% 65%;
     }
