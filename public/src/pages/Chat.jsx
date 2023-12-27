@@ -14,6 +14,8 @@ export default function Chat() {
   const [contacts, setContacts] = useState([]);
   const [currentChat, setCurrentChat] = useState(undefined);
   const [currentUser, setCurrentUser] = useState(undefined);
+  const [groups, setGroups] = useState([]);
+
   useEffect(async () => {
     if (!localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)) {
       navigate("/login");
@@ -25,6 +27,7 @@ export default function Chat() {
       );
     }
   }, []);
+
   useEffect(() => {
     if (currentUser) {
       socket.current = io(host);
@@ -35,29 +38,34 @@ export default function Chat() {
   useEffect(async () => {
     if (currentUser) {
       if (currentUser.isAvatarImageSet) {
-        const data = await axios.get(`${allUsersRoute}/${currentUser._id}`);
-        setContacts(data.data);
+        // Fetch users
+        const userData = await axios.get(`${allUsersRoute}/${currentUser._id}`);
+        setContacts(userData.data);
+
+        // Fetch groups
+        const groupData = await axios.get(`${host}/api/groups/user-groups?userId=${currentUser._id}`);
+        setGroups(groupData.data);
       } else {
         navigate("/setAvatar");
       }
     }
   }, [currentUser]);
+
   const handleChatChange = (chat) => {
     setCurrentChat(chat);
   };
+
   return (
-    <>
-      <Container>
-        <div className="container">
-          <Contacts contacts={contacts} changeChat={handleChatChange} />
-          {currentChat === undefined ? (
-            <Welcome />
-          ) : (
-            <ChatContainer currentChat={currentChat} socket={socket} />
-          )}
-        </div>
-      </Container>
-    </>
+    <Container>
+      <AppContainer>
+        <Contacts contacts={contacts} groups={groups} changeChat={handleChatChange} />
+        {currentChat === undefined ? (
+          <Welcome />
+        ) : (
+          <ChatContainer currentChat={currentChat} socket={socket} />
+        )}
+      </AppContainer>
+    </Container>
   );
 }
 
@@ -69,15 +77,19 @@ const Container = styled.div`
   justify-content: center;
   gap: 1rem;
   align-items: center;
-  background-color: #131324;
-  .container {
-    height: 85vh;
-    width: 85vw;
-    background-color: #00000076;
-    display: grid;
-    grid-template-columns: 25% 75%;
-    @media screen and (min-width: 720px) and (max-width: 1080px) {
-      grid-template-columns: 35% 65%;
-    }
+  background-color: #f8f8f8; /* Light background color */
+`;
+
+const AppContainer = styled.div`
+  height: 85vh;
+  width: 85vw;
+  background-color: #fff; /* White background */
+  display: grid;
+  grid-template-columns: 25% 75%;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Subtle box shadow */
+  border-radius: 10px; /* Rounded corners */
+  overflow: hidden;
+  @media screen and (min-width: 720px) and (max-width: 1080px) {
+    grid-template-columns: 35% 65%;
   }
 `;
