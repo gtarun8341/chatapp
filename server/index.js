@@ -12,7 +12,12 @@ const app = express();
 const socket = require("socket.io");
 require("dotenv").config();
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://chatapp-iota-black.vercel.app',
+  credentials: true,
+  methods: 'GET,PUT,POST,OPTIONS',
+  allowedHeaders: 'Content-Type,Authorization'
+}));
 app.use(express.json());
 app.use(bodyParser.json());
 
